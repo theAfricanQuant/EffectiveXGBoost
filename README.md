@@ -1,6 +1,6 @@
 # Effective XGBoost by Matt Harrison - My Personal Take
 
-This repository contains my personal notes, examples, and code implementations based on the book "Effective XGBoost" by Matt Harrison. The purpose of this repo is to provide a learning resource for those interested in XGBoost and machine learning in general.
+This repository contains my personal notes, examples, and code implementations based on the book "Effective XGBoost" by Matt Harrison. The purpose of this repo is to document my journey as I peer thru the mind of a master displaying his craft so i could glean some insights myself into building models that I could use for my projects.
 
 ## Table of Contents
 
