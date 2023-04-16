@@ -1,0 +1,16 @@
+digraph {
+    graph [ rankdir=TB ];
+  node [fontname = "Roboto Condensed"];
+    edge [fontname = "Roboto Thin"];
+    label = "XGBoost Stump"
+    fontname = "Roboto Condensed"
+    
+
+    0 [ label="r<0.5" ]
+    0 -> 1 [label="yes, missing" color="#0000FF"]
+    0 -> 2 [label="no" color="#FF0000"]
+
+    1 [ label="leaf=0.0717741922" ]
+
+    2 [ label="leaf=-0.356190503" ]
+}
