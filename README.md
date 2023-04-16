@@ -10,10 +10,10 @@ This repository contains my personal notes, examples, and code implementations b
 3 Exploratory Data Analysis 
 
 
-4 Tree Creation 23
+4 Tree Creation 
 
 
-5 Stumps on Real Data 31
+5 Stumps on Real Data 
  
 
 6 Model Complexity & Hyperparameters 
@@ -22,7 +22,7 @@ This repository contains my personal notes, examples, and code implementations b
 7 Tree Hyperparameters 
 
 
-8 Random Forest 51
+8 Random Forest 
 
 
 
