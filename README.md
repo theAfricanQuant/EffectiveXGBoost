@@ -1,6 +1,6 @@
 # Effective XGBoost by Matt Harrison - My Personal Take
 
-This repository contains my personal notes, examples, and code implementations based on the book "Effective XGBoost" by Matt Harrison. The purpose of this repo is to document my journey as I peer thru the mind of a master displaying his craft so i could glean some insights myself into building models that I could use for my projects.
+This repository contains my personal notes, examples, and code implementations based on the book "Effective XGBoost" by Matt Harrison. The purpose of this repo is to document my journey as I peer thru the mind of a master displaying his craft so I could glean some insights myself into building models that I could use for my projects.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ This repository contains my personal notes, examples, and code implementations b
 
 8 Random Forest 
 
+9 XGBoost
 
-
-
+10 Early Stopping
 
