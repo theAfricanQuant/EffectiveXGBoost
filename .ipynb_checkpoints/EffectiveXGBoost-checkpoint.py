@@ -11,6 +11,8 @@ import numpy as np
 import urllib.request
 import zipfile
 
+from IPython.display import Image, display
+
 from feature_engine import encoding, imputation
 from sklearn import base, pipeline
 
@@ -246,3 +248,60 @@ def inv_logit(p: float) -> float:
         The output of the inverse logit function.
     """
     return np.exp(p) / (1 + np.exp(p))
+
+def my_image_export(model, n_trees, filename, title='', direction='TB'):
+    """
+    Export a specified number of trees from an XGBoost model as a graph
+    visualization in dot and png formats.
+
+    Parameters:
+    -----------
+    model : xgboost.core.Booster
+        The XGBoost model to visualize.
+    n_trees : int
+        The number of trees to export.
+    filename : str
+        The name of the file to save the exported visualization.
+    title : str, optional
+        The title to display on the graph visualization.
+    direction : str, optional
+        The direction to lay out the graph. Valid values are 'TB' (top to bottom)
+        and 'LR' (left to right).
+
+    Returns:
+    --------
+    None
+
+    Notes:
+    ------
+    This function generates a dot file containing the graph visualization of the
+    specified number of trees from the model. It then modifies the dot file to add
+    a title and set the direction of the graph layout. The modified dot file is saved
+    to disk as a dot file and a png file. The png file has the same name as the dot file
+    but with the '.png' extension.
+
+    Example:
+    --------
+    >>> import xgboost as xgb
+    >>> model = xgb.train(params, dtrain)
+    >>> my_dot_export(model, n_trees=2, filename='mytree', title='My Tree Visualization', direction='LR')
+
+    This example exports the first two trees from the specified XGBoost model as a
+    graph visualization with the title 'My Tree Visualization' and a left-to-right
+    layout. The visualization is saved to disk as 'mytree.dot' and 'mytree.png'.
+    """
+    res = xgb.to_graphviz(model, num_trees=n_trees)
+    content = f''' node [fontname = "Roboto Condensed"];
+    edge [fontname = "Roboto Thin"];
+    label = "{title}"
+    fontname = "Roboto Condensed"
+    '''
+    out = res.source.replace('graph [ rankdir=TB ]',
+                             f'graph [ rankdir={direction} ];\n {content}')
+    # dot -Gdpi=300 -Tpng -ocourseflow.png courseflow.dot
+    dot_filename = filename
+    with open(dot_filename, 'w') as f:
+        f.write(out)
+    png_filename = dot_filename.replace('.dot', '.png')
+    subprocess.run(f'dot -Gdpi=300 -Tpng -o{png_filename} {dot_filename}'.split())
+    display(Image(filename=png_filename))
