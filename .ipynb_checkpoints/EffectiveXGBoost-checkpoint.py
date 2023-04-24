@@ -14,9 +14,13 @@ import zipfile
 from IPython.display import Image, display
 
 from feature_engine import encoding, imputation
-from sklearn import base, pipeline
+from sklearn import base, pipeline, model_selection
 
-from sklearn import model_selection
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from sklearn.metrics import accuracy_score, roc_auc_score
+from typing import Any, Dict, Union, Sequence
+
+import plotly.graph_objects as go
 
 import xgboost as xgb
 
@@ -305,3 +309,152 @@ def my_image_export(model, n_trees, filename, title='', direction='TB'):
     png_filename = dot_filename.replace('.dot', '.png')
     subprocess.run(f'dot -Gdpi=300 -Tpng -o{png_filename} {dot_filename}'.split())
     display(Image(filename=png_filename))
+
+    
+def hyperparameter_tuning(space: Dict[str, Union[float, int]],
+X_train: pd.DataFrame, y_train: pd.Series,
+X_test: pd.DataFrame, y_test: pd.Series,
+early_stopping_rounds: int=50,
+metric:callable=accuracy_score) -> Dict[str, Any]:
+    """
+    Perform hyperparameter tuning for an XGBoost classifier.
+    This function takes a dictionary of hyperparameters, training
+    and test data, and an optional value for early stopping rounds,
+    and returns a dictionary with the loss and model resulting from
+    the tuning process. The model is trained using the training
+    data and evaluated on the test data. The loss is computed as
+    the negative of the accuracy score.
+    Parameters
+    ----------
+    space : Dict[str, Union[float, int]]
+    A dictionary of hyperparameters for the XGBoost classifier.
+    X_train : pd.DataFrame
+    The training data.
+    y_train : pd.Series
+    The training target.
+    X_test : pd.DataFrame
+    The test data.
+    y_test : pd.Series
+    The test target.
+    early_stopping_rounds : int, optional
+    The number of early stopping rounds to use. The default value
+    is 50.
+    metric : callable
+    Metric to maximize. Default is accuracy
+    Returns
+    -------
+    Dict[str, Any]
+    A dictionary with the loss and model resulting from the
+    tuning process. The loss is a float, and the model is an
+    XGBoost classifier.
+    """
+    int_vals = ['max_depth', 'reg_alpha']
+    space = {k: (int(val) if k in int_vals else val)
+    for k,val in space.items()}
+    space['early_stopping_rounds'] = early_stopping_rounds
+    model = xgb.XGBClassifier(**space)
+    evaluation = [(X_train, y_train),
+    (X_test, y_test)]
+    model.fit(X_train, y_train,
+    eval_set=evaluation,
+    verbose=False)
+    pred = model.predict(X_test)
+    score = metric(y_test, pred)
+    return {'loss': -score, 'status': STATUS_OK, 'model': model}
+
+
+def plot_3d_mesh(df: pd.DataFrame, x_col: str, y_col: str,
+    z_col: str) -> go.Figure:
+    """
+    Create a 3D mesh plot using Plotly.
+    This function creates a 3D mesh plot using Plotly, with
+    the `x_col`, `y_col`, and `z_col` columns of the `df`
+    DataFrame as the x, y, and z values, respectively. The
+    plot has a title and axis labels that match the column
+    names, and the intensity of the mesh is proportional
+    to the values in the `z_col` column. The function returns
+    a Plotly Figure object that can be displayed or saved as
+    desired.
+    Parameters
+    ----------
+    df : pd.DataFrame
+    The DataFrame containing the data to plot.
+    x_col : str
+    The name of the column to use as the x values.
+    y_col : str
+    The name of the column to use as the y values.
+    z_col : str
+    The name of the column to use as the z values.
+    Returns
+    -------
+    go.Figure
+    A Plotly Figure object with the 3D mesh plot.
+    """
+    fig = go.Figure(data=[go.Mesh3d(x=df[x_col], y=df[y_col], z=df[z_col],
+                                    intensity=df[z_col]/ df[z_col].min(),
+                                    hovertemplate=f"{z_col}: %{{z}}<br>{x_col}: %{{x}}<br>{y_col}: "
+                                    "%{{y}}<extra></extra>")],
+    )
+    fig.update_layout(
+        title=dict(text=f'{y_col} vs {x_col}'),
+        scene = dict(
+            xaxis_title=x_col,
+            yaxis_title=y_col,
+            zaxis_title=z_col),
+        width=700,
+        margin=dict(r=20, b=10, l=10, t=50)
+            )
+    return fig
+
+
+def jitter(df: pd.DataFrame, col: str, amount: float=1) -> pd.Series:
+    """
+    Add random noise to the values in a Pandas DataFrame column.
+    This function adds random noise to the values in a specified
+    column of a Pandas DataFrame. The noise is uniform random
+    noise with a range of `amount` centered around zero. The
+    function returns a Pandas Series with the jittered values.
+    Parameters
+    ----------
+    df : pd.DataFrame
+    The input DataFrame.
+    col : str
+    The name of the column to jitter.
+    amount : float, optional
+    The range of the noise to add. The default value is 1.
+    Returns
+    -------
+    pd.Series
+    A Pandas Series with the jittered values.
+    """
+
+    vals = np.random.uniform(low=-amount/2, high=amount/2,
+    size=df.shape[0])
+    return df[col] + vals
+
+
+def trial2df(trial: Sequence[Dict[str, Any]]) -> pd.DataFrame:
+    """
+    Convert a Trial object (sequence of trial dictionaries)
+    to a Pandas DataFrame.
+    Parameters
+    ----------
+    trial : List[Dict[str, Any]]
+    A list of trial dictionaries.
+    Returns
+    -------
+    pd.DataFrame
+    A DataFrame with columns for the loss, trial id, and
+    values from each trial dictionary.
+    """
+    vals = []
+    for t in trial:
+        result = t['result']
+        misc = t['misc']
+        val = {k:(v[0] if isinstance(v, list) else v)
+            for k,v in misc['vals'].items()
+            }
+        val['loss'] = result['loss']
+        val['tid'] = t['tid']
+        vals.append(val)
+    return pd.DataFrame(vals)
