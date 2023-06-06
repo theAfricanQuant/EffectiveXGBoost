@@ -26,7 +26,7 @@ import xgboost as xgb
 
 import subprocess
 
-def extract_dataset(src_path: str, dst_path: str, dataset: str) -> pd.DataFrame: 
+def extract_dataset(src_path: str, dst_path: str, dataset: str) -> pd.DataFrame:
     """Extracts a chosen dataset from a zip file and read it into a pandas
     DataFrame.
     
@@ -49,20 +49,19 @@ def extract_dataset(src_path: str, dst_path: str, dataset: str) -> pd.DataFrame:
     
     # using `urllib.request` module to open the URL specified in `src_path`.    
     open_path = urllib.request.urlopen(src_path)
-    
+
     # reads the contents of the file object `open_path`
     data = open_path.read()
-    
+
     # using context management to write the file in the destination path or folder
     with open(dst_path, mode='wb') as f:
         f.write(data)
-       
+
     # using context management to extract the saved zip file.
     with zipfile.ZipFile(dst_path) as z:
         all_df = pd.read_csv(z.open(dataset))
         df_ = all_df.iloc[0]
-        df = all_df.iloc[1:]
-        return df
+        return all_df.iloc[1:]
     
     
 
